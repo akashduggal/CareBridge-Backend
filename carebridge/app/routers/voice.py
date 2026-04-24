@@ -5,8 +5,8 @@ from fastapi.responses import Response
 from twilio.twiml.voice_response import VoiceResponse, Gather
 from dotenv import load_dotenv
 
-from app.services.groq_service import get_opening_message, get_ai_response, score_call
-from app.services.escalation import route_escalation
+from carebridge.app.services.groq_service import get_opening_message, get_ai_response, score_call
+from carebridge.app.services.escalation import route_escalation
 
 load_dotenv()
 
