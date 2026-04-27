@@ -10,6 +10,7 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+alembic/versions/*.py
 
 # Environment variables - NEVER commit this
 .env

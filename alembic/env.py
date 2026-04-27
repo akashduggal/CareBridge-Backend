@@ -7,7 +7,9 @@ from sqlalchemy import pool
 from alembic import context
 from dotenv import load_dotenv
 
-load_dotenv()
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+#load_dotenv()
 
 # This loads your models so Alembic can detect table changes
 from carebridge.app.models.base import Base
@@ -42,11 +44,16 @@ async def run_migrations_online():
     import ssl
     ssl_context = ssl.create_default_context()
     
+    #connectable = create_async_engine(
+    #    get_url().split("?")[0],  # strip the ?ssl=require from URL
+    #    poolclass=pool.NullPool,
+     #   connect_args={"ssl": ssl_context}  # pass SSL properly
+    #)
+
     connectable = create_async_engine(
-        get_url().split("?")[0],  # strip the ?ssl=require from URL
-        poolclass=pool.NullPool,
-        connect_args={"ssl": ssl_context}  # pass SSL properly
-    )
+    get_url(),
+    poolclass=pool.NullPool,
+)
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
     await connectable.dispose()
