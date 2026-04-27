@@ -44,16 +44,17 @@ async def run_migrations_online():
     import ssl
     ssl_context = ssl.create_default_context()
     
-    #connectable = create_async_engine(
-    #    get_url().split("?")[0],  # strip the ?ssl=require from URL
-    #    poolclass=pool.NullPool,
-     #   connect_args={"ssl": ssl_context}  # pass SSL properly
-    #)
-
     connectable = create_async_engine(
-    get_url(),
-    poolclass=pool.NullPool,
-)
+        get_url().split("?")[0],  # strip the ?ssl=require from URL
+        poolclass=pool.NullPool,
+        connect_args={"ssl": ssl_context}  # pass SSL properly
+    )
+
+    #LOCAL CONNECTION 
+   # connectable = create_async_engine(
+   # get_url(),
+   # poolclass=pool.NullPool,
+#)
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
     await connectable.dispose()

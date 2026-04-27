@@ -16,9 +16,14 @@ class CallOutcome(Base):
     auto_escalate_reason: Mapped[str] = mapped_column(Text, nullable=True)
     flags: Mapped[dict] = mapped_column(JSONB, nullable=True)
     recommended_action: Mapped[str] = mapped_column(Text, nullable=True)
-    confidence: Mapped[float] = mapped_column(Float, nullable=True)
     needs_human_review: Mapped[bool] = mapped_column(Boolean, default=False)
     scored_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    score_reasoning: Mapped[str] = mapped_column(Text, nullable=True)
+    medication_adherent: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    symptoms_worsening: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    has_followup_appointment: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    has_home_support: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    emergency_detected: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
 
 class EscalationAction(Base):
