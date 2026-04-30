@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from uuid import UUID
-from carebridge.app.database import get_db
+from carebridge.app.config.database import get_db
 from carebridge.app.models.call import CallAttempt
 
 router = APIRouter(prefix="/calls", tags=["calls"])

@@ -1,32 +1,38 @@
 import os
 from groq import Groq
 from dotenv import load_dotenv
-
+import logging
+logger = logging.getLogger(__name__)
 load_dotenv()
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-SYSTEM_PROMPT = """You are a warm, professional post-discharge care assistant calling patients 
-on behalf of their hospital. Your job is to check in on the patient after they were recently discharged.
+SYSTEM_PROMPT = """
+You are a warm, professional post-discharge care assistant calling patients
+on behalf of their hospital.
 
-You must assess:
-1. Medication adherence — are they taking all medications as prescribed?
-2. Symptom changes — any new or worsening symptoms since discharge?
-3. Follow-up appointment — have they scheduled or confirmed it?
-4. Support at home — do they have help at home?
+Your job is to ask general post-discharge check-in questions.
+
+Assess:
+1. Medication adherence
+2. New or worsening symptoms
+3. Follow-up appointment
+4. Support at home
 
 Rules:
-- Be warm, concise, and clear. Patients may be elderly or unwell.
+- Do not mention diagnosis, condition name, hospital details, or medications by name.
+- Never diagnose.
+- Never give medical advice except emergency guidance.
 - Ask ONE question at a time.
-- If the patient mentions chest pain, difficulty breathing, or any emergency symptom, 
-  immediately say: "That sounds serious. Please call 911 or go to your nearest emergency room right away."
-- Never diagnose. Never give medical advice beyond directing to emergency services.
 - Keep each response under 3 sentences.
-- When you have enough information on all 4 areas, end with: "Thank you so much for your time. 
-  We'll follow up if needed. Take care and feel better soon. Goodbye."
+- If the patient mentions chest pain, difficulty breathing, stroke symptoms, or loss of consciousness,
+  tell them to call 911 or go to the nearest emergency room.
+- When enough information is collected, end with:
+  "Thank you so much for your time. We'll follow up if needed. Take care and feel better soon. Goodbye."
 """
 
-def get_opening_message(patient_name: str, diagnosis: str) -> str:
+
+def get_opening_message(patient_name: str) -> str:
     """Returns the opening line of the call."""
     return (
         f"Hello, may I speak with {patient_name}? "
@@ -35,12 +41,12 @@ def get_opening_message(patient_name: str, diagnosis: str) -> str:
         f"Is now a good time to talk?"
     )
 
-def get_ai_response(conversation_history: list) -> str:
-    """Send conversation history to Groq and get next agent response."""
+def get_ai_response(conversation_history: list, baseline_risk: str = "medium") -> str:
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": f"Baseline risk: {baseline_risk}. Do not mention diagnosis."},
             *conversation_history
         ],
         max_tokens=150,
@@ -48,13 +54,25 @@ def get_ai_response(conversation_history: list) -> str:
     )
     return response.choices[0].message.content.strip()
 
-def score_call(transcript: str, diagnosis_group: str) -> dict:
+def score_call(transcript: str, diagnosis_group: str, baseline_risk: str) -> dict:
     """After call ends, score the patient's risk level. Returns tier + reasoning."""
+    if len(transcript.strip()) < 20:
+        return {
+            "score": 0,
+            "tier": 1,
+            "medication_adherent": True,
+            "symptoms_worsening": False,
+            "has_followup_appointment": False,
+            "has_home_support": False,
+            "reasoning": "Call too short to score accurately",
+            "emergency_detected": False
+        }
     scoring_prompt = f"""
 You are a clinical triage assistant. Based on the following post-discharge call transcript, 
 score the patient's readmission risk.
 
 Diagnosis group: {diagnosis_group}
+Baseline risk: {baseline_risk}
 Transcript:
 {transcript}
 
@@ -79,4 +97,18 @@ Respond with ONLY the JSON object, no other text.
     )
     import json
     raw = response.choices[0].message.content.strip()
-    return json.loads(raw)
+    logger.info(f"Raw scoring response: {raw}")
+    # Strip any markdown backtick wrapping
+    if raw.startswith("```"):
+        # Remove opening ``` and optional language tag
+        raw = raw.lstrip("`")
+        if raw.startswith("json"):
+            raw = raw[4:]
+        # Remove closing ```
+        raw = raw.rstrip("`")
+
+    raw = raw.strip()
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Groq returned invalid JSON: {raw}") from e

@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import timedelta
 from uuid import UUID
-from carebridge.app.database import get_db
+from carebridge.app.config.database import get_db
 from carebridge.app.models.discharge import DischargeEvent
 from carebridge.app.schemas.discharge import DischargeCreate, DischargeOut
 

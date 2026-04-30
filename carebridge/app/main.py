@@ -5,7 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from carebridge.app.routers import voice, patients, discharges, calls
 from carebridge.app.scheduler import start_scheduler, scheduler
+import logging
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 load_dotenv()
 
 @asynccontextmanager

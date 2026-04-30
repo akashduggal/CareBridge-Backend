@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from carebridge.app.database import get_db
+from carebridge.app.config.database import get_db
 from carebridge.app.models.patient import Patient
 from carebridge.app.schemas.patient import PatientCreate, PatientOut
 

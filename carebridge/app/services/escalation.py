@@ -1,7 +1,8 @@
 import os
 from twilio.rest import Client
 from dotenv import load_dotenv
-
+import logging
+logger = logging.getLogger(__name__)
 load_dotenv()
 
 twilio_client = Client(
@@ -15,7 +16,7 @@ NURSE_PHONE = os.getenv("ON_CALL_NURSE_PHONE")
 
 def send_patient_confirmation_sms(patient_phone: str, patient_name: str):
     """Tier 1 — SMS patient confirming we got their info."""
-    print(
+    logger.info(
             f"Hi {patient_name}, thank you for speaking with us today. "
             f"Your care team has received your check-in. "
             f"If you have any concerns, please call your doctor directly."
@@ -33,7 +34,7 @@ def send_patient_confirmation_sms(patient_phone: str, patient_name: str):
 
 def notify_nurse(patient_name: str, score: int, reasoning: str, call_sid: str):
     """Tier 2 — SMS on-call nurse with patient summary."""
-    print(
+    logger.info(
             f"TIER 2 ALERT — Patient: {patient_name}\n"
             f"Risk Score: {score}/10\n"
             f"Reason: {reasoning}\n"
@@ -54,7 +55,7 @@ def notify_nurse(patient_name: str, score: int, reasoning: str, call_sid: str):
 
 
 def notify_physician(patient_name: str, score: int, reasoning: str, call_sid: str):
-    print(
+    logger.info(
             f"🚨 TIER 3 URGENT — Patient: {patient_name}\n"
             f"Risk Score: {score}/10\n"
             f"Reason: {reasoning}\n"
@@ -78,6 +79,7 @@ def notify_physician(patient_name: str, score: int, reasoning: str, call_sid: st
 def route_escalation(tier: int, patient_name: str, patient_phone: str,
                      score: int, reasoning: str, call_sid: str):
     """Main router — calls the right escalation based on tier."""
+    logger.info(f"Routing escalation for patient {patient_name}, tier {tier}")
     if tier == 1:
         send_patient_confirmation_sms(patient_phone, patient_name)
         # pass
